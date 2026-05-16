@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NightShield</string>
+    <string name="app_description">
+        NightShield 通过在屏幕上叠加半透明遮罩层，实现比系统最低亮度更暗的效果。\n
+        使用方法：先将系统亮度调至最低，再通过本应用进一步降低亮度。\n
+        提示：通知栏可快速开关，点击通知可打开设置。
+    </string>
+
+    <!-- 通知相关 -->
+    <string name="notification_channel_name">屏幕亮度过滤</string>
+    <string name="notification_channel_desc">夜间屏幕亮度调节服务运行中</string>
+    <string name="filter_running">🌙 NightShield 运行中</string>
+    <string name="filter_stopped">NightShield 已关闭</string>
+    <string name="turn_off">关闭</string>
+
+    <!-- 权限相关 -->
+    <string name="permission_overlay_required">需要悬浮窗权限</string>
+    <string name="permission_overlay_message">NightShield 需要悬浮窗权限才能在屏幕上叠加亮度遮罩层。\n\n请在接下来的设置页面中，找到 NightShield 并开启「允许在其他应用上层显示」权限。</string>
+    <string name="permission_overlay_granted">✅ 悬浮窗权限已授予</string>
+    <string name="permission_overlay_required_click">⚠️ 需要悬浮窗权限，点击授权</string>
+    <string name="permission_overlay_denied">悬浮窗权限被拒绝，无法使用</string>
+    <string name="go_to_settings">去授权</string>
+    <string name="cancel">取消</string>
+
+    <!-- 界面标签 -->
+    <string name="dim_level_label">亮度遮罩</string>
+    <string name="filter_intensity_label">蓝光过滤</string>
+    <string name="boot_start_label">开机自启</string>
+    <string name="main_switch_label">主开关</string>
+    <string name="darkest">最暗</string>
+    <string name="no_filter">无遮罩</string>
+    <string name="off">关闭</string>
+    <string name="strongest">最强</string>
+
+    <!-- 通知内容模板 -->
+    <string name="notification_title">🌙 NightShield 运行中</string>
+    <string name="notification_dim_text">亮度遮罩 %1$d%%</string>
+    <string name="notification_filter_text"> | 蓝光过滤 %1$d%%</string>
+</resources>

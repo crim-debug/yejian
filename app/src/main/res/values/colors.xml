@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深色主题配色 -->
+    <color name="bg_dark">#0D1117</color>
+    <color name="card_bg">#161B22</color>
+    <color name="text_primary">#E6EDF3</color>
+    <color name="text_secondary">#8B949E</color>
+    <color name="text_hint">#484F58</color>
+
+    <!-- 强调色 -->
+    <color name="accent_blue">#58A6FF</color>
+    <color name="accent_amber">#F0883E</color>
+
+    <!-- 开关颜色 -->
+    <color name="switch_thumb">#E6EDF3</color>
+    <color name="switch_track">#30363D</color>
+
+    <!-- 滑块背景 -->
+    <color name="seekbar_bg">#21262D</color>
+
+    <!-- 透明色（用于遮罩预览） -->
+    <color name="transparent">#00000000</color>
+</resources>
