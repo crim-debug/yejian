@@ -10,6 +10,7 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import android.widget.FrameLayout
@@ -27,6 +28,7 @@ class ScreenFilterService : Service() {
     companion object {
         const val CHANNEL_ID = "screen_filter_channel"
         const val NOTIFICATION_ID = 1001
+        private const val TAG = "NightShield"
 
         // Intent 参数键
         const val EXTRA_DIM_LEVEL = "dim_level"       // 0~100，0=最暗，100=无遮罩
@@ -44,14 +46,18 @@ class ScreenFilterService : Service() {
 
     private var windowManager: WindowManager? = null
     private var overlayView: FrameLayout? = null
+    private var isOverlayShown = false
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
+        Log.d(TAG, "Service onCreate")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d(TAG, "onStartCommand: action=${intent?.action}, dimLevel=${intent?.getIntExtra(EXTRA_DIM_LEVEL, -1)}, filterIntensity=${intent?.getIntExtra(EXTRA_FILTER_INTENSITY, -1)}")
+        
         when {
             intent == null -> {
                 // 服务被系统重启，使用保存的状态
@@ -68,7 +74,11 @@ class ScreenFilterService : Service() {
                 intent.getIntExtra(EXTRA_FILTER_INTENSITY, currentFilterIntensity).let {
                     currentFilterIntensity = it
                 }
-                updateOverlay()
+                if (isOverlayShown) {
+                    updateOverlay()
+                } else {
+                    showOverlay()
+                }
                 updateNotification()
             }
             else -> {
@@ -83,6 +93,7 @@ class ScreenFilterService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d(TAG, "Service onDestroy")
         removeOverlay()
         isRunning = false
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -96,6 +107,7 @@ class ScreenFilterService : Service() {
         startForeground(NOTIFICATION_ID, buildNotification())
         showOverlay()
         isRunning = true
+        Log.d(TAG, "Foreground service started, isRunning=$isRunning")
     }
 
     /**
@@ -172,20 +184,18 @@ class ScreenFilterService : Service() {
 
     /**
      * 显示遮罩层
-     *
-     * 使用 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY 创建全屏遮罩
-     * 遮罩颜色由 dimLevel 和 filterIntensity 共同决定：
-     * - dimLevel 控制黑色透明度（亮度降低）
-     * - filterIntensity 控制暖色调强度（蓝光过滤）
      */
     private fun showOverlay() {
-        if (overlayView != null) {
+        if (isOverlayShown && overlayView != null) {
             updateOverlay()
             return
         }
 
+        val color = calculateFilterColor()
+        Log.d(TAG, "showOverlay: color=0x${Integer.toHexString(color)}, dimLevel=$currentDimLevel, filterIntensity=$currentFilterIntensity")
+
         overlayView = FrameLayout(this).apply {
-            setBackgroundColor(calculateFilterColor())
+            setBackgroundColor(color)
         }
 
         val layoutParams = WindowManager.LayoutParams(
@@ -199,15 +209,16 @@ class ScreenFilterService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            // 确保遮罩覆盖状态栏和导航栏
-            screenBrightness = -1f  // 不改变系统亮度
         }
 
         try {
             windowManager?.addView(overlayView, layoutParams)
+            isOverlayShown = true
+            Log.d(TAG, "Overlay added successfully")
         } catch (e: Exception) {
-            // 悬浮窗权限被拒绝
-            removeOverlay()
+            Log.e(TAG, "Failed to add overlay: ${e.message}")
+            isOverlayShown = false
+            overlayView = null
         }
     }
 
@@ -215,7 +226,9 @@ class ScreenFilterService : Service() {
      * 更新遮罩颜色
      */
     private fun updateOverlay() {
-        overlayView?.setBackgroundColor(calculateFilterColor())
+        val color = calculateFilterColor()
+        Log.d(TAG, "updateOverlay: color=0x${Integer.toHexString(color)}")
+        overlayView?.setBackgroundColor(color)
     }
 
     /**
@@ -225,25 +238,24 @@ class ScreenFilterService : Service() {
         try {
             overlayView?.let {
                 windowManager?.removeView(it)
+                Log.d(TAG, "Overlay removed")
             }
         } catch (e: Exception) {
-            // 忽略移除异常
+            Log.e(TAG, "Failed to remove overlay: ${e.message}")
         }
         overlayView = null
+        isOverlayShown = false
     }
 
     /**
      * 计算遮罩颜色
      *
-     * 亮度降低：通过黑色透明度实现，dimLevel 越高遮罩越深
-     * 蓝光过滤：通过暖色调（琥珀色）实现，减少蓝光
-     *
      * @return ARGB 颜色值
      */
     private fun calculateFilterColor(): Int {
         // dimLevel: 0 = 最暗(全黑遮罩), 100 = 无遮罩
-        // 转换为 alpha: dimLevel=0 → alpha=220(很暗), dimLevel=100 → alpha=0(透明)
-        val dimAlpha = ((100 - currentDimLevel) / 100f * 220).toInt()
+        // 转换为 alpha: dimLevel=0 → alpha=200(很暗), dimLevel=100 → alpha=0(透明)
+        val dimAlpha = ((100 - currentDimLevel) / 100f * 200).toInt().coerceIn(0, 255)
 
         // filterIntensity: 0 = 无过滤, 100 = 最强暖色
         // 暖色 RGB: (255, 180, 80) - 琥珀色
@@ -254,6 +266,8 @@ class ScreenFilterService : Service() {
         val g = (180 * filterRatio).toInt()
         val b = (80 * filterRatio).toInt()
 
-        return android.graphics.Color.argb(dimAlpha, r, g, b)
+        val color = android.graphics.Color.argb(dimAlpha, r, g, b)
+        Log.d(TAG, "calculateFilterColor: dimAlpha=$dimAlpha, r=$r, g=$g, b=$b, color=0x${Integer.toHexString(color)}")
+        return color
     }
 }
