@@ -22,9 +22,9 @@
 
 每次代码更新后，GitHub Actions 会自动编译并发布 APK：
 
-👉 [点击此处查看最新 Releases](https://github.com/你的用户名/NightShield/releases)
+👉 [点击此处查看最新 Releases](https://github.com/crim-debug/nightshield/releases)
 
-或者查看 [Actions 页面](https://github.com/你的用户名/NightShield/actions) 下载最新构建的 APK。
+或者查看 [Actions 页面](https://github.com/crim-debug/nightshield/actions) 下载最新构建的 APK。
 
 ## 自行编译
 
